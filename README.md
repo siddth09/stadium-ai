@@ -15,9 +15,9 @@ Instead of treating stadium management as isolated problems (e.g., ticketing vs.
 
 **The logic revolves around four pillars:**
 1. **Real-Time State Management:** A unified Context API tracks live crowd densities, transit schedules, and emergency alerts.
-2. **Context-Aware AI Assistant:** Using the Google Gemini API, we provide multilingual, context-aware assistance that knows the user's location, the live stadium state, and security protocols.
-3. **Interactive Visual Intelligence:** An intuitive, SVG-based Football Stadium heatmap dynamically translates numerical density data into pulsing visual indicators for immediate operational decision-making.
-4. **Safety & Security First:** AI inputs are strictly sanitized and rate-limited to prevent prompt injection, XSS, and API abuse.
+2. **Operational Intelligence & Decision Support:** A dedicated AI dashboard generates live, actionable decision-support reports (e.g., "Divert fans from North Gate, dispatch medical to Section 101") based on the real-time stadium data. This satisfies the core requirement for real-time operational intelligence.
+3. **Context-Aware AI Assistant:** Using the Google Gemini API, we provide multilingual, context-aware assistance that knows the user's location, the live stadium state, and security protocols.
+4. **Interactive Visual Intelligence:** An intuitive, SVG-based Football Stadium heatmap dynamically translates numerical density data into pulsing visual indicators for immediate operational decision-making.
 
 ---
 

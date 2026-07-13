@@ -3,10 +3,12 @@
  * stadium stats, crowd heatmap summary, and quick actions.
  */
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Page, CrowdDensity } from '@/types';
 import { t } from '@/utils/i18n';
+import { getAIResponse } from '@/services/aiService';
+import DOMPurify from 'dompurify';
 
 /** Formats large numbers with K/M suffix. */
 function formatNumber(n: number): string {
@@ -41,6 +43,22 @@ function Dashboard() {
     const total = zones.reduce((s, z) => s + z.currentOccupancy, 0);
     return { critical, high, total };
   }, [zones]);
+
+  const [aiReport, setAiReport] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generateReport = async () => {
+    setIsGenerating(true);
+    try {
+      const prompt = "Generate a short, bulleted Operational Intelligence report for stadium staff based on current crowd densities and emergencies. Provide 3 actionable real-time decisions to optimize flow and safety.";
+      const report = await getAIResponse(prompt, state, language);
+      setAiReport(DOMPurify.sanitize(report.replace(/\n/g, '<br/>')));
+    } catch (e) {
+      setAiReport("Failed to generate operational report.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <main className="page" id="main-content" role="main">
@@ -208,6 +226,40 @@ function Dashboard() {
           >
             View All Zones →
           </button>
+        </div>
+      </section>
+
+      {/* AI Operational Intelligence */}
+      <section aria-label="Operational Intelligence" style={{ marginBottom: 'var(--space-lg)' }}>
+        <h2 className="section-title" style={{ marginBottom: 'var(--space-sm)' }}>
+          🧠 AI Operational Intelligence
+        </h2>
+        <div className="glass-card-flat" style={{ borderLeft: '4px solid var(--color-accent-purple)' }}>
+          <p style={{ fontSize: '0.875rem', marginBottom: 'var(--space-md)' }}>
+            Generate a real-time decision support report based on live stadium data.
+          </p>
+          <button
+            className="btn btn-primary"
+            onClick={generateReport}
+            disabled={isGenerating}
+            style={{ marginBottom: aiReport ? 'var(--space-md)' : 0 }}
+          >
+            {isGenerating ? 'Analyzing live data...' : 'Generate Live Report'}
+          </button>
+          
+          {aiReport && (
+            <div 
+              style={{
+                marginTop: 'var(--space-md)',
+                padding: 'var(--space-md)',
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.875rem',
+                lineHeight: 1.6
+              }}
+              dangerouslySetInnerHTML={{ __html: aiReport }}
+            />
+          )}
         </div>
       </section>
 

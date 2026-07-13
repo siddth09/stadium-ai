@@ -14,6 +14,24 @@ export default defineConfig({
     target: 'es2020',
     sourcemap: false,
     minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor';
+            }
+            if (id.includes('framer-motion') || id.includes('recharts')) {
+              return 'ui';
+            }
+            return 'deps';
+          }
+        }
+      }
+    }
+  },
+  esbuild: {
+    drop: ['console', 'debugger'],
   },
   test: {
     globals: true,
