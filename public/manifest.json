@@ -1,0 +1,16 @@
+{
+  "name": "StadiumAI",
+  "short_name": "StadiumAI",
+  "description": "GenAI-powered Smart Stadium Operations for FIFA World Cup 2026",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f2c",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
