@@ -6,6 +6,7 @@ import { memo, useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { CrowdDensity } from '@/types';
 import { t } from '@/utils/i18n';
+import { StadiumMap } from './StadiumMap';
 
 function CrowdManager() {
   const { state } = useApp();
@@ -30,6 +31,11 @@ function CrowdManager() {
         <h1 className="page-title">👥 {t('crowd', language)}</h1>
         <p className="page-subtitle">Real-time zone density monitoring</p>
       </header>
+
+      {/* Visual Heatmap */}
+      <section aria-label="Stadium Heatmap" style={{ marginBottom: 'var(--space-lg)' }}>
+        <StadiumMap zones={zones} />
+      </section>
 
       {/* Overview stats */}
       <div className="stat-grid" aria-label="Crowd statistics">
