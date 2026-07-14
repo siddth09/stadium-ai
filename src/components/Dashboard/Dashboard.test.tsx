@@ -5,7 +5,7 @@ import Dashboard from './Dashboard';
 import * as aiService from '@/services/aiService';
 
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   LineChart: () => <div>LineChart</div>,
   Line: () => <div>Line</div>,
   XAxis: () => <div>XAxis</div>,

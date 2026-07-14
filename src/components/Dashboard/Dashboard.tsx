@@ -3,7 +3,7 @@
  * stadium stats, crowd heatmap summary, and quick actions.
  */
 
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState, useCallback } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Page, CrowdDensity } from '@/types';
 import { t } from '@/utils/i18n';
@@ -47,18 +47,23 @@ function Dashboard() {
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const generateReport = async () => {
+  const generateReport = useCallback(async () => {
     setIsGenerating(true);
     try {
       const prompt = "Generate a short, bulleted Operational Intelligence report for stadium staff based on current crowd densities and emergencies. Provide 3 actionable real-time decisions to optimize flow and safety.";
       const report = await getAIResponse(prompt, state, language);
       setAiReport(DOMPurify.sanitize(report.replace(/\n/g, '<br/>')));
-    } catch (e) {
+    } catch (_err) {
       setAiReport("Failed to generate operational report.");
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [state, language]);
+
+  const navigateTo = useCallback(
+    (page: Page) => dispatch({ type: 'SET_PAGE', payload: page }),
+    [dispatch],
+  );
 
   return (
     <main className="page" id="main-content" role="main">
@@ -68,50 +73,16 @@ function Dashboard() {
       </header>
 
       {/* Match Banner */}
-      <section
-        className="glass-card"
-        style={{
-          background: 'linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2))',
-          marginBottom: 'var(--space-lg)',
-          textAlign: 'center',
-        }}
-        aria-label="Current match information"
-      >
-        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
-          🏟️ {match.venue}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-lg)' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.5rem' }}>{match.teamA}</div>
-          </div>
-          <div
-            style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '2rem',
-              fontWeight: 800,
-              color: 'var(--color-text-primary)',
-            }}
-            aria-label={`Score: ${match.score.home} to ${match.score.away}`}
-          >
+      <section className="glass-card match-banner" aria-label="Current match information">
+        <div className="match-venue">🏟️ {match.venue}</div>
+        <div className="match-score-row">
+          <div className="match-team">{match.teamA}</div>
+          <div className="match-score" aria-label={`Score: ${match.score.home} to ${match.score.away}`}>
             {match.score.home} — {match.score.away}
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.5rem' }}>{match.teamB}</div>
-          </div>
+          <div className="match-team">{match.teamB}</div>
         </div>
-        <div
-          style={{
-            display: 'inline-block',
-            marginTop: 'var(--space-sm)',
-            padding: '4px 12px',
-            borderRadius: 'var(--radius-full)',
-            background: match.status === 'live' ? 'rgba(248,113,113,0.2)' : 'rgba(52,211,153,0.15)',
-            color: match.status === 'live' ? 'var(--color-accent-red)' : 'var(--color-accent-green)',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-          }}
-          aria-live="polite"
-        >
+        <div className={`match-status ${match.status === 'live' ? 'match-status--live' : 'match-status--default'}`} aria-live="polite">
           ● {match.status.toUpperCase()}
         </div>
       </section>
@@ -148,54 +119,42 @@ function Dashboard() {
 
       {/* Alerts */}
       {activeAlerts.length > 0 && (
-        <section aria-label="Active emergency alerts" style={{ marginBottom: 'var(--space-lg)' }}>
-          <h2 className="section-title" style={{ marginBottom: 'var(--space-sm)' }}>
-            🚨 Active Alerts
-          </h2>
+        <section aria-label="Active emergency alerts" className="section-mb">
+          <h2 className="section-title section-title-mb">🚨 Active Alerts</h2>
           {activeAlerts.map((alert) => (
             <div
               key={alert.id}
-              className="glass-card-flat"
+              className={`glass-card-flat alert-card ${alert.severity === 'critical' ? 'border-left-red' : 'border-left-yellow'}`}
               role="alert"
-              style={{
-                marginBottom: 'var(--space-sm)',
-                borderLeft: `4px solid ${alert.severity === 'critical' ? 'var(--color-accent-red)' : 'var(--color-accent-yellow)'}`,
-              }}
             >
-              <div style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '4px' }}>
+              <div className="alert-header">
                 {alert.type === 'weather' ? '⛈️' : '🏥'} {alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} — {alert.severity.toUpperCase()}
               </div>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
-                {alert.message}
-              </p>
+              <p className="alert-body">{alert.message}</p>
             </div>
           ))}
         </section>
       )}
 
       {/* Crowd Heatmap Summary */}
-      <section aria-label="Crowd density overview" style={{ marginBottom: 'var(--space-lg)' }}>
-        <h2 className="section-title" style={{ marginBottom: 'var(--space-sm)' }}>
-          👥 Zone Density
-        </h2>
+      <section aria-label="Crowd density overview" className="section-mb">
+        <h2 className="section-title section-title-mb">👥 Zone Density</h2>
         <div className="glass-card-flat">
           {zoneSummary.critical > 0 && (
             <p style={{ color: 'var(--color-accent-red)', fontWeight: 600, fontSize: '0.875rem', marginBottom: '4px' }}>
               ⚠️ {zoneSummary.critical} zone(s) at critical capacity
             </p>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
+          <div className="zone-list">
             {zones.slice(0, 6).map((zone) => {
               const info = densityInfo(zone.density, language);
               const pct = Math.round((zone.currentOccupancy / zone.capacity) * 100);
               return (
-                <div key={zone.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.8125rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {zone.name}
-                    </div>
+                <div key={zone.id} className="zone-row">
+                  <div className="zone-row__info">
+                    <div className="zone-row__name">{zone.name}</div>
                     <div
-                      style={{ height: 6, borderRadius: 'var(--radius-full)', background: 'var(--color-bg-glass-strong)', marginTop: 4 }}
+                      className="zone-row__bar"
                       role="progressbar"
                       aria-valuenow={pct}
                       aria-valuemin={0}
@@ -203,13 +162,8 @@ function Dashboard() {
                       aria-label={`${zone.name}: ${pct}% capacity`}
                     >
                       <div
-                        style={{
-                          height: '100%',
-                          width: `${pct}%`,
-                          borderRadius: 'var(--radius-full)',
-                          background: `var(--color-density-${zone.density})`,
-                          transition: 'width var(--transition-base)',
-                        }}
+                        className="zone-row__fill"
+                        style={{ width: `${pct}%`, background: `var(--color-density-${zone.density})` }}
                       />
                     </div>
                   </div>
@@ -219,9 +173,9 @@ function Dashboard() {
             })}
           </div>
           <button
-            className="btn btn-secondary btn-sm"
-            style={{ width: '100%', marginTop: 'var(--space-md)' }}
-            onClick={() => dispatch({ type: 'SET_PAGE', payload: Page.Crowd })}
+            className="btn btn-secondary btn-sm w-full"
+            style={{ marginTop: 'var(--space-md)' }}
+            onClick={() => navigateTo(Page.Crowd)}
             aria-label="View full crowd management dashboard"
           >
             View All Zones →
@@ -230,33 +184,23 @@ function Dashboard() {
       </section>
 
       {/* AI Operational Intelligence */}
-      <section aria-label="Operational Intelligence" style={{ marginBottom: 'var(--space-lg)' }}>
-        <h2 className="section-title" style={{ marginBottom: 'var(--space-sm)' }}>
-          🧠 AI Operational Intelligence
-        </h2>
-        <div className="glass-card-flat" style={{ borderLeft: '4px solid var(--color-accent-purple)' }}>
-          <p style={{ fontSize: '0.875rem', marginBottom: 'var(--space-md)' }}>
+      <section aria-label="Operational Intelligence" className="section-mb">
+        <h2 className="section-title section-title-mb">🧠 AI Operational Intelligence</h2>
+        <div className="glass-card-flat border-left-purple">
+          <p className="ai-report-desc">
             Generate a real-time decision support report based on live stadium data.
           </p>
           <button
             className="btn btn-primary"
             onClick={generateReport}
             disabled={isGenerating}
-            style={{ marginBottom: aiReport ? 'var(--space-md)' : 0 }}
           >
             {isGenerating ? 'Analyzing live data...' : 'Generate Live Report'}
           </button>
-          
+
           {aiReport && (
-            <div 
-              style={{
-                marginTop: 'var(--space-md)',
-                padding: 'var(--space-md)',
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.875rem',
-                lineHeight: 1.6
-              }}
+            <div
+              className="ai-report-output"
               dangerouslySetInnerHTML={{ __html: aiReport }}
             />
           )}
@@ -265,10 +209,8 @@ function Dashboard() {
 
       {/* Quick Actions */}
       <section aria-label="Quick actions">
-        <h2 className="section-title" style={{ marginBottom: 'var(--space-sm)' }}>
-          ⚡ Quick Actions
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-sm)' }}>
+        <h2 className="section-title section-title-mb">⚡ Quick Actions</h2>
+        <div className="action-grid">
           {[
             { icon: '🤖', label: t('assistant', language), page: Page.Assistant },
             { icon: '🧭', label: t('wayfinding', language), page: Page.Wayfinding },
@@ -277,26 +219,11 @@ function Dashboard() {
           ].map((action) => (
             <button
               key={action.page}
-              className="glass-card-flat"
-              onClick={() => dispatch({ type: 'SET_PAGE', payload: action.page })}
-              style={{
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-sm)',
-                padding: 'var(--space-md)',
-                border: '1px solid var(--color-border-glass)',
-                background: 'var(--color-bg-card)',
-                color: 'var(--color-text-primary)',
-                fontFamily: 'var(--font-body)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                borderRadius: 'var(--radius-md)',
-                transition: 'all var(--transition-fast)',
-              }}
+              className="action-btn"
+              onClick={() => navigateTo(action.page)}
               aria-label={`Go to ${action.label}`}
             >
-              <span aria-hidden="true" style={{ fontSize: '1.25rem' }}>{action.icon}</span>
+              <span aria-hidden="true" className="action-icon">{action.icon}</span>
               {action.label}
             </button>
           ))}

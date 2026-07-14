@@ -184,7 +184,7 @@ function getFallbackResponse(message: string, state: AppState): string {
 export async function getAIResponse(
   rawMessage: string,
   state: AppState,
-  language: Language,
+  _language: Language,
 ): Promise<string> {
   // 1. Sanitize input
   const message = sanitizeInput(rawMessage);
@@ -213,6 +213,5 @@ export async function getAIResponse(
   }
 
   // 4. Fallback to rule-based responses
-  void language; // Language used for context in Gemini prompt
   return getFallbackResponse(message, state);
 }

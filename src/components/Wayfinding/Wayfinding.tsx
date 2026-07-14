@@ -41,6 +41,10 @@ function Wayfinding() {
     setSelectedDest(dest);
   }, []);
 
+  const clearDirections = useCallback(() => {
+    setSelectedDest(null);
+  }, []);
+
   const directionInfo = useMemo(() => {
     if (!selectedDest) return null;
     const lower = selectedDest.toLowerCase();
@@ -64,7 +68,7 @@ function Wayfinding() {
       const acc = zones.find((z) => z.type === 'accessibility');
       return acc ? { zone: acc, route: 'Sensory Room is at Level 1, near Gate B. Elevator access available from all levels.', time: '5 min walk' } : null;
     }
-    return { zone: null, route: 'Follow the stadium wayfinding signs. Ask any volunteer for assistance.', time: '~5 min' };
+    return { zone: null, route: 'Follow the stadium wayfinding signs. Ask a volunteer for assistance.', time: '~5 min' };
   }, [selectedDest, zones]);
 
   return (
@@ -75,7 +79,7 @@ function Wayfinding() {
       </header>
 
       {/* Search */}
-      <div style={{ marginBottom: 'var(--space-lg)' }}>
+      <div className="section-mb">
         <label htmlFor="wayfinding-search" className="sr-only">Search for a zone or facility</label>
         <input
           id="wayfinding-search"
@@ -86,30 +90,18 @@ function Wayfinding() {
           aria-label="Search stadium zones and facilities"
           maxLength={200}
           autoComplete="off"
-          style={{
-            width: '100%',
-            padding: 'var(--space-sm) var(--space-md)',
-            background: 'var(--color-bg-input)',
-            border: '1px solid var(--color-border-glass)',
-            borderRadius: 'var(--radius-full)',
-            color: 'var(--color-text-primary)',
-            fontSize: '0.875rem',
-            fontFamily: 'var(--font-body)',
-            outline: 'none',
-          }}
+          className="form-input"
         />
       </div>
 
       {/* Search Results */}
       {search && matchedZones.length > 0 && (
-        <section aria-label="Search results" style={{ marginBottom: 'var(--space-lg)' }}>
-          <h2 className="section-title" style={{ marginBottom: 'var(--space-sm)' }}>
-            Results ({matchedZones.length})
-          </h2>
+        <section aria-label="Search results" className="section-mb">
+          <h2 className="section-title section-title-mb">Results ({matchedZones.length})</h2>
           {matchedZones.map((z) => (
-            <div key={z.id} className="glass-card-flat" style={{ marginBottom: 'var(--space-sm)', padding: 'var(--space-md)' }}>
-              <h3 style={{ fontSize: '0.875rem', fontWeight: 600 }}>{z.name}</h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+            <div key={z.id} className="glass-card-flat alert-card" style={{ padding: 'var(--space-md)' }}>
+              <h3 className="search-result-title">{z.name}</h3>
+              <p className="search-result-meta">
                 Level {z.level} • {z.type} • {z.accessibleRoute ? '♿ Accessible' : ''}
               </p>
               <span className={`density-badge density-${z.density}`} style={{ marginTop: '4px' }}>
@@ -122,27 +114,19 @@ function Wayfinding() {
 
       {/* Direction Result */}
       {directionInfo && (
-        <section
-          className="glass-card"
-          style={{ marginBottom: 'var(--space-lg)', borderLeft: '4px solid var(--color-accent-primary)' }}
-          aria-label="Navigation directions"
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 'var(--space-sm)' }}>
+        <section className="glass-card section-mb border-left-primary" aria-label="Navigation directions">
+          <div className="directions-header">
             <h2 className="section-title">📍 Directions</h2>
-            <button className="btn btn-secondary btn-sm" onClick={() => setSelectedDest(null)} aria-label="Close directions">✕</button>
+            <button className="btn btn-secondary btn-sm" onClick={clearDirections} aria-label="Close directions">✕</button>
           </div>
           {directionInfo.zone && (
-            <div style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '4px' }}>
-              {directionInfo.zone.name}
-            </div>
+            <div className="directions-zone">{directionInfo.zone.name}</div>
           )}
-          <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
-            {directionInfo.route}
-          </p>
-          <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-accent-cyan)' }}>🕐 {directionInfo.time}</span>
+          <p className="directions-route">{directionInfo.route}</p>
+          <div className="directions-meta">
+            <span className="meta-time">🕐 {directionInfo.time}</span>
             {directionInfo.zone?.accessibleRoute && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--color-accent-green)' }}>♿ Accessible</span>
+              <span className="meta-accessible">♿ Accessible</span>
             )}
           </div>
         </section>
@@ -150,36 +134,20 @@ function Wayfinding() {
 
       {/* Quick Destinations */}
       <section aria-label="Quick navigation destinations">
-        <h2 className="section-title" style={{ marginBottom: 'var(--space-sm)' }}>
-          Quick Navigate
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+        <h2 className="section-title section-title-mb">Quick Navigate</h2>
+        <div className="dest-list">
           {DESTINATIONS.map((d) => (
             <button
               key={d.label}
-              className="glass-card-flat"
+              className={`dest-btn ${selectedDest === d.label ? 'dest-btn--active' : ''}`}
               onClick={() => getDirections(d.label)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-md)',
-                padding: 'var(--space-md)',
-                cursor: 'pointer',
-                border: selectedDest === d.label ? '1px solid var(--color-accent-primary)' : '1px solid var(--color-border-glass)',
-                background: selectedDest === d.label ? 'rgba(102,126,234,0.08)' : 'var(--color-bg-card)',
-                color: 'var(--color-text-primary)',
-                fontFamily: 'var(--font-body)',
-                textAlign: 'left',
-                borderRadius: 'var(--radius-md)',
-                transition: 'all var(--transition-fast)',
-              }}
               aria-label={`Navigate to ${d.label}: ${d.desc}`}
               aria-pressed={selectedDest === d.label}
             >
-              <span style={{ fontSize: '1.5rem' }} aria-hidden="true">{d.icon}</span>
+              <span className="dest-icon" aria-hidden="true">{d.icon}</span>
               <div>
-                <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{d.label}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{d.desc}</div>
+                <div className="dest-title">{d.label}</div>
+                <div className="dest-desc">{d.desc}</div>
               </div>
             </button>
           ))}

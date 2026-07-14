@@ -24,6 +24,12 @@ const SUGGESTIONS = [
   '♻️ Sustainability',
 ] as const;
 
+/** Supported language options displayed in the selector. */
+const LANGUAGE_OPTIONS = [
+  Language.English, Language.Spanish, Language.French,
+  Language.Arabic, Language.Hindi, Language.Chinese,
+] as const;
+
 function AIAssistant() {
   const { state, dispatch } = useApp();
   const { chatMessages, isAILoading, language } = state;
@@ -109,23 +115,28 @@ function AIAssistant() {
     [sendMessage],
   );
 
+  const handleLanguageChange = useCallback(
+    (lang: Language) => dispatch({ type: 'SET_LANGUAGE', payload: lang }),
+    [dispatch],
+  );
+
   return (
-    <main className="page" id="main-content" role="main" style={{ display: 'flex', flexDirection: 'column', padding: 0 }}>
+    <main className="page chat-page" id="main-content" role="main">
       <LiveRegion message={announcement} politeness="polite" />
 
       {/* Header */}
-      <header style={{ padding: 'var(--space-lg) var(--space-md) var(--space-sm)' }}>
+      <header className="chat-header">
         <h1 className="page-title">🤖 {t('assistant', language)}</h1>
         <p className="page-subtitle">Ask me anything about the stadium</p>
       </header>
 
       {/* Language selector */}
-      <div style={{ padding: '0 var(--space-md) var(--space-sm)', display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap' }}>
-        {[Language.English, Language.Spanish, Language.French, Language.Arabic, Language.Hindi, Language.Chinese].map((lang) => (
+      <div className="chat-lang-bar">
+        {LANGUAGE_OPTIONS.map((lang) => (
           <button
             key={lang}
             className={`btn btn-sm ${language === lang ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => dispatch({ type: 'SET_LANGUAGE', payload: lang })}
+            onClick={() => handleLanguageChange(lang)}
             aria-label={`Switch language to ${getLanguageName(lang)}`}
             aria-pressed={language === lang}
           >
@@ -135,29 +146,13 @@ function AIAssistant() {
       </div>
 
       {/* Messages */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: 'var(--space-md)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--space-sm)',
-        }}
-        role="log"
-        aria-label="Chat messages"
-        aria-live="polite"
-      >
+      <div className="chat-messages" role="log" aria-label="Chat messages" aria-live="polite">
         {chatMessages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 'var(--space-xl) 0' }}>
-            <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>🤖</div>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
-              {t('welcome', language)}
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-lg)' }}>
-              {t('askAI', language)}
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-xs)', justifyContent: 'center' }}>
+          <div className="chat-empty">
+            <div className="chat-empty__icon">🤖</div>
+            <h2 className="chat-empty__title">{t('welcome', language)}</h2>
+            <p className="chat-empty__desc">{t('askAI', language)}</p>
+            <div className="chat-chips">
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
@@ -175,41 +170,23 @@ function AIAssistant() {
         {chatMessages.map((msg) => (
           <div
             key={msg.id}
-            style={{
-              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              maxWidth: '85%',
-            }}
+            className={`chat-msg ${msg.role === 'user' ? 'chat-msg--user' : 'chat-msg--ai'}`}
             role="article"
             aria-label={`${msg.role === 'user' ? 'You' : 'StadiumAI'} said`}
           >
-            <div
-              style={{
-                padding: 'var(--space-sm) var(--space-md)',
-                borderRadius: 'var(--radius-md)',
-                borderBottomRightRadius: msg.role === 'user' ? '4px' : undefined,
-                borderBottomLeftRadius: msg.role === 'assistant' ? '4px' : undefined,
-                background: msg.role === 'user'
-                  ? 'linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary))'
-                  : 'var(--color-bg-card)',
-                border: msg.role === 'assistant' ? '1px solid var(--color-border-glass)' : 'none',
-                fontSize: '0.875rem',
-                lineHeight: 1.6,
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-              }}
-            >
+            <div className={`chat-bubble ${msg.role === 'user' ? 'chat-bubble--user' : 'chat-bubble--ai'}`}>
               {msg.content}
             </div>
-            <div style={{ fontSize: '0.625rem', color: 'var(--color-text-muted)', marginTop: '2px', textAlign: msg.role === 'user' ? 'right' : 'left' }}>
+            <div className={`chat-timestamp ${msg.role === 'user' ? 'chat-timestamp--right' : 'chat-timestamp--left'}`}>
               {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
         ))}
 
         {isAILoading && (
-          <div style={{ alignSelf: 'flex-start', maxWidth: '85%' }} aria-label="StadiumAI is typing">
-            <div className="glass-card-flat" style={{ padding: 'var(--space-sm) var(--space-md)', fontSize: '0.875rem' }}>
-              <span style={{ animation: 'pulse 1.5s ease-in-out infinite' }}>🤖 Thinking...</span>
+          <div className="chat-msg--ai" aria-label="StadiumAI is typing">
+            <div className="glass-card-flat chat-typing">
+              <span className="animate-pulse">🤖 Thinking...</span>
             </div>
           </div>
         )}
@@ -218,18 +195,7 @@ function AIAssistant() {
       </div>
 
       {/* Input */}
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          padding: 'var(--space-md)',
-          paddingBottom: 'calc(var(--navbar-height) + var(--space-md))',
-          display: 'flex',
-          gap: 'var(--space-sm)',
-          background: 'rgba(10, 15, 44, 0.95)',
-          borderTop: '1px solid var(--color-border-glass)',
-        }}
-        aria-label="Send a message"
-      >
+      <form onSubmit={handleSubmit} className="chat-form" aria-label="Send a message">
         <input
           ref={inputRef}
           type="text"
@@ -240,35 +206,17 @@ function AIAssistant() {
           disabled={isAILoading}
           aria-label="Type your message"
           autoComplete="off"
-          style={{
-            flex: 1,
-            padding: 'var(--space-sm) var(--space-md)',
-            background: 'var(--color-bg-input)',
-            border: '1px solid var(--color-border-glass)',
-            borderRadius: 'var(--radius-full)',
-            color: 'var(--color-text-primary)',
-            fontSize: '0.875rem',
-            fontFamily: 'var(--font-body)',
-            outline: 'none',
-          }}
+          className="chat-input"
         />
         <button
           type="submit"
           disabled={!input.trim() || isAILoading}
-          className="btn btn-primary"
-          style={{ borderRadius: 'var(--radius-full)', padding: 'var(--space-sm) var(--space-md)' }}
+          className="btn btn-primary chat-send"
           aria-label={t('send', language)}
         >
           {t('send', language)}
         </button>
       </form>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </main>
   );
 }

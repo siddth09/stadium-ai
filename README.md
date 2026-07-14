@@ -1,71 +1,156 @@
 # StadiumAI — Smart Stadium Operations | FIFA World Cup 2026 ⚽🏟️
 
-![StadiumAI](https://stadium-ai-three.vercel.app/favicon.svg)
-
 ## 📌 Submission for Prompt Wars - Challenge 4
-**Vertical Chosen:** Smart Stadiums & Tournament Operations  
-**Live Deployment:** [StadiumAI on Vercel](https://stadium-ai-three.vercel.app)  
-**GitHub Repository:** [StadiumAI Repo](https://github.com/siddth09/stadium-ai)  
+
+**Vertical Chosen:** Smart Stadiums & Tournament Operations
+**Live Demo:** [StadiumAI on Vercel](https://stadium-ai-three.vercel.app)
+**Repository:** [GitHub — siddth09/stadium-ai](https://github.com/siddth09/stadium-ai)
 
 ---
 
 ## 🎯 Approach and Logic
-StadiumAI is a GenAI-enabled comprehensive digital operations hub built to enhance the FIFA World Cup 2026 experience. 
-Instead of treating stadium management as isolated problems (e.g., ticketing vs. navigation vs. crowd control), our approach unifies these into a single, cohesive React-based ecosystem.
 
-**The logic revolves around four pillars:**
-1. **Real-Time State Management:** A unified Context API tracks live crowd densities, transit schedules, and emergency alerts.
-2. **Operational Intelligence & Decision Support:** A dedicated AI dashboard generates live, actionable decision-support reports (e.g., "Divert fans from North Gate, dispatch medical to Section 101") based on the real-time stadium data. This satisfies the core requirement for real-time operational intelligence.
-3. **Context-Aware AI Assistant:** Using the Google Gemini API, we provide multilingual, context-aware assistance that knows the user's location, the live stadium state, and security protocols.
-4. **Interactive Visual Intelligence:** An intuitive, SVG-based Football Stadium heatmap dynamically translates numerical density data into pulsing visual indicators for immediate operational decision-making.
+StadiumAI is a **GenAI-enabled comprehensive digital operations hub** built to enhance the FIFA World Cup 2026 experience for fans, organizers, volunteers, and venue staff.
+
+Instead of treating stadium management as isolated problems (e.g., ticketing vs. navigation vs. crowd control), our approach unifies these into a **single, cohesive React-based ecosystem** powered by the **Google Gemini API**.
+
+### Architecture Overview
+
+```
+┌──────────────────────────────────────────────────┐
+│                   React Frontend                  │
+│  ┌─────────────────────────────────────────────┐ │
+│  │  AppContext (useReducer — Single Source of   │ │
+│  │  Truth for all real-time stadium state)      │ │
+│  └──────────┬──────────────────────────┬───────┘ │
+│             │                          │         │
+│  ┌──────────▼────────┐    ┌───────────▼───────┐ │
+│  │   UI Components    │    │   AI Service      │ │
+│  │  Dashboard         │    │  ┌─────────────┐  │ │
+│  │  CrowdManager      │    │  │ Gemini API  │  │ │
+│  │  Wayfinding        │◄──►│  │ (Primary)   │  │ │
+│  │  Transport         │    │  ├─────────────┤  │ │
+│  │  Emergency         │    │  │ Rule-Based  │  │ │
+│  │  Sustainability    │    │  │ (Fallback)  │  │ │
+│  │  Volunteer         │    │  └─────────────┘  │ │
+│  └───────────────────┘    └───────────────────┘ │
+│                                                   │
+│  ┌─────────────────────────────────────────────┐ │
+│  │  Security Layer                              │ │
+│  │  DOMPurify · Rate Limiter · CSP · Zod       │ │
+│  └─────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────┘
+```
+
+### Core Design Pillars
+
+1. **Real-Time State Management:** A unified Context API (useReducer) tracks live crowd densities, transit schedules, emergency alerts, and match state — providing a single source of truth consumed by all components.
+2. **Operational Intelligence & Decision Support:** A dedicated AI dashboard generates live, actionable decision-support reports (e.g., "Divert fans from North Gate, dispatch medical to Section 101") based on the real-time stadium data.
+3. **Context-Aware GenAI Assistant:** Using the **Google Gemini API**, we provide multilingual, context-aware assistance that knows the live stadium state, the user's role, and safety protocols.
+4. **Interactive Visual Intelligence:** An SVG-based Football Stadium heatmap dynamically translates numerical density data into pulsing visual indicators for immediate operational decision-making.
 
 ---
 
 ## ⚙️ How the Solution Works
-* **GenAI Multilingual Assistant:** A conversational interface where fans can ask questions in their native language (e.g., "Where is the nearest restroom?"). The assistant uses the live stadium context to provide accurate, safe routing.
-* **Crowd Management & Heatmap:** Uses a custom SVG stadium map that pulses and shifts colors (Green -> Yellow -> Red) based on live occupancy data for each zone (North Stand, VIP, Food Courts, etc.).
-* **Smart Wayfinding:** Dynamic routing that calculates the safest and fastest paths. It explicitly accounts for accessible (wheelchair-friendly) routes and avoids critical density bottlenecks.
-* **Transport & Sustainability:** Integrates live transit options (Metro, Bus, Rideshare) and calculates the carbon footprint of each choice, gamifying eco-friendly travel for fans.
-* **Emergency Protocols:** Staff can trigger severity-based alerts (e.g., Medical emergencies or weather warnings) that instantly broadcast across the application.
+
+### Feature ↔ Challenge Requirement Matrix
+
+| Challenge Requirement | Feature | Component |
+|---|---|---|
+| **Navigation** | AI-powered seat finder, zone search, accessible routing | `Wayfinding` |
+| **Crowd Management** | Real-time SVG heatmap, density tracking per zone | `CrowdManager`, `StadiumMap` |
+| **Accessibility** | High-contrast mode, screen reader support (ARIA), sensory room routing, wheelchair routes | `Accessibility`, all components |
+| **Transportation** | Live transit options with carbon comparison | `Transport` |
+| **Sustainability** | Carbon footprint tracking, recycling rates, renewable energy metrics | `Sustainability` |
+| **Multilingual Assistance** | 12-language support via i18n + Gemini multilingual prompting | `AIAssistant`, `i18n.ts` |
+| **Operational Intelligence** | AI-generated decision support reports from live state | `Dashboard` (AI OI section) |
+| **Real-time Decision Support** | Context-aware Gemini responses using live crowd/emergency data | `aiService.ts` |
+| **Volunteer Coordination** | Task management with priority and status tracking | `Volunteer` |
+| **Emergency Response** | Severity-based alerts, incident reporting, evacuation guidance | `Emergency` |
+
+### GenAI Integration Details
+
+The solution integrates the **Google Gemini 2.0 Flash** model in two ways:
+
+1. **Conversational AI Assistant** — Users ask questions in natural language. The system constructs a context-enriched prompt that includes:
+   - Current match score and status
+   - Live crowd density for every zone
+   - Active emergency alerts
+   - User role (fan/staff/volunteer/organizer)
+   - Language preference
+
+   Gemini responds with situationally-aware guidance. A **rule-based fallback** ensures the app works without an API key.
+
+2. **Operational Intelligence Dashboard** — Staff can generate AI-powered real-time reports that analyze the current stadium state and output **3 actionable decisions** for crowd flow optimization and safety.
 
 ---
 
 ## 🧠 Assumptions Made
+
 1. **Live Data Feeds:** We assume the presence of stadium IoT sensors (turnstiles, cameras) that provide the real-time occupancy data mocked in `stadiumData.ts`.
 2. **Connectivity:** We assume a baseline level of 5G/Wi-Fi connectivity within the stadium for real-time app synchronization.
-3. **Hardware:** The visual heatmap assumes the user is on a modern device capable of rendering CSS animations and SVG filters efficiently.
+3. **Hardware:** The visual heatmap assumes the user is on a modern device capable of rendering CSS animations and SVG efficiently.
 
 ---
 
-## 🏆 Evaluation Focus Areas (Targeting 100/100)
+## 🛠️ Tech Stack
 
-### 1. Code Quality 🌟 (High Impact)
-* **Architecture:** Strictly typed using TypeScript. Separation of concerns with custom hooks (`useDebounce`), Context API (`AppContext`), and modular React components.
-* **Maintainability:** Clean, scalable folder structure (`src/components`, `src/utils`, `src/hooks`, `src/types`). Reusable utility functions for translations and data validation.
+| Layer | Technology |
+|---|---|
+| Framework | React 19 + TypeScript (strict mode) |
+| Build | Vite 8 with esbuild minification |
+| GenAI | Google Gemini 2.0 Flash API |
+| State | React Context + useReducer |
+| Styling | CSS custom properties (design tokens) |
+| Validation | Zod v4 (runtime schema validation) |
+| Security | DOMPurify, CSP, rate limiting, input sanitization |
+| Testing | Vitest + Testing Library + v8 coverage |
+| Visualization | Recharts (line charts), custom SVG (stadium heatmap) |
+| Deployment | Vercel (auto-deploy from main branch) |
 
-### 2. Security 🔒 (High Impact)
-* **XSS Prevention:** All user inputs and AI outputs are rigorously scrubbed using `DOMPurify` before rendering.
-* **Input Validation:** Strict runtime schema validation using `Zod` (v4).
-* **Rate Limiting:** A custom Token-Bucket rate limiter (`rateLimiter.ts`) ensures the GenAI API cannot be spammed or DDoSed by malicious actors.
-* **Content Security Policy:** Strict CSP headers ensure no unauthorized scripts can execute.
+---
 
-### 3. Problem Statement Alignment 🎯 (High Impact)
-* **FIFA World Cup 2026 Context:** The UI, heatmap, and data points are specifically tailored to a major football tournament.
-* **Holistic Coverage:** Seamlessly integrates navigation, crowd management, accessibility, transportation, sustainability, and multilingual GenAI assistance into one platform.
+## 🏆 Evaluation Focus Areas
 
-### 4. Testing 🧪 (Medium/High Impact)
-* **Test Coverage:** Comprehensive unit testing using `Vitest` (`@vitest/coverage-v8`) and `Testing Library`.
-* **Robustness:** 100% pass rate across 19 complex test suites covering rate-limiters, sanitization, validation, i18n, and accessibility hooks.
+### 1. Code Quality (High Impact)
+- **TypeScript Strict Mode:** `noUnusedLocals`, `noUnusedParameters`, `noUncheckedIndexedAccess`, `forceConsistentCasingInFileNames` all enabled.
+- **ESLint Hardened:** `no-explicit-any: warn`, `no-unused-vars: warn`, `jsx-a11y` plugin active, `no-console` restricted.
+- **Architecture:** Clean separation — `components/`, `services/`, `hooks/`, `utils/`, `config/`, `types/`, `context/`.
+- **CSS Design System:** All styling uses CSS custom properties and utility classes. Inline styles are minimized to prevent render-time object allocation.
+- **EditorConfig & Prettier:** Consistent formatting enforced across editors.
 
-### 5. Efficiency ⚡ (Medium Impact)
-* **Performance:** Optimized Vite build utilizing `esbuild` for rapid compilation. 
-* **State Optimization:** Strategic use of `useMemo` and `useCallback` to prevent unnecessary re-renders of complex SVG nodes and data grids.
-* **Lightweight:** The entire repository is significantly under the 10 MB limit, completely contained within a single `main` branch.
+### 2. Security (High Impact)
+- **Content Security Policy:** Applied via `<meta>` tag — restricts script/style/connect sources.
+- **XSS Prevention:** All user inputs sanitized through `DOMPurify` before rendering.
+- **Input Validation:** Runtime schema validation via `Zod` on all user-facing inputs.
+- **Rate Limiting:** Token-bucket algorithm prevents API abuse (10 requests burst, 1/sec refill).
+- **Trusted Origins:** API calls validated against an allowlist before execution.
+- **No Secrets Exposed:** API keys loaded via environment variables, `.env` files gitignored.
 
-### 6. Accessibility ♿ (Low/Medium Impact)
-* **WCAG Compliance:** Designed with High-Contrast themes and semantic HTML.
-* **Screen Reader Ready:** Extensive use of `aria-live`, `aria-label`, and `role="status"` ensures visually impaired fans receive real-time updates (e.g., crowd density alerts and AI responses).
-* **Keyboard Navigation:** Full focus-management ensuring the app can be navigated entirely without a mouse.
+### 3. Efficiency (Medium Impact)
+- **Code Splitting:** All page components lazy-loaded via `React.lazy` + `Suspense`.
+- **Bundle Optimization:** Vendor/UI/app chunks separated via `manualChunks`. Production build drops `console` and `debugger`.
+- **Memoization:** `useMemo` for computed data, `useCallback` for event handlers, `memo()` on all exported components.
+- **CSS over Inline Styles:** Styles defined in CSS classes rather than inline `style={{}}` objects to avoid per-render object creation.
+- **Debouncing:** Custom `useDebounce` hook prevents excessive re-computation during user input.
+
+### 4. Testing (Medium Impact)
+- **Coverage:** Comprehensive unit tests for all layers — components, services, context, utilities, config.
+- **Test Pyramid:** Unit tests for utilities/services, component render tests with Testing Library, reducer tests for state logic.
+- **100% Pass Rate:** All test suites pass with zero failures.
+
+### 5. Accessibility (Low Impact)
+- **WCAG AA:** High-contrast mode, `aria-live` regions, semantic HTML, focus management.
+- **Screen Readers:** `aria-label`, `role="alert"`, `role="log"`, `PageAnnouncer` for route changes.
+- **Keyboard Navigation:** Full focus-trap support, skip-to-content link, visible focus indicators.
+- **Reduced Motion:** `prefers-reduced-motion` media query disables all animations.
+- **Inclusive Design:** Sensory room routing, wheelchair-accessible paths, multilingual support.
+
+### 6. Problem Statement Alignment (High Impact)
+- Directly addresses **FIFA World Cup 2026** context with MetLife Stadium data.
+- Covers **all 8 challenge areas**: navigation, crowd management, accessibility, transportation, sustainability, multilingual assistance, operational intelligence, real-time decision support.
+- Demonstrates **smart, dynamic assistant** capability with context-aware Gemini integration.
+- Shows **logical decision making** through density-based routing and AI-generated operational reports.
 
 ---
 
@@ -74,8 +159,6 @@ Instead of treating stadium management as isolated problems (e.g., ticketing vs.
 ```bash
 # Clone the repository
 git clone https://github.com/siddth09/stadium-ai.git
-
-# Navigate to the directory
 cd stadium-ai
 
 # Install dependencies
@@ -88,6 +171,18 @@ cp .env.example .env
 # Run the development server
 npm run dev
 
-# Run Tests
+# Run all tests with coverage
 npm run test:coverage
+
+# Lint the codebase
+npm run lint
+
+# Production build
+npm run build
 ```
+
+---
+
+## 📄 License
+
+[MIT License](./LICENSE)
